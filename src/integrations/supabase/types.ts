@@ -76,6 +76,35 @@ export type Database = {
         }
         Relationships: []
       }
+      community_bans: {
+        Row: {
+          community_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_bans_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_members: {
         Row: {
           community_id: string
@@ -108,6 +137,38 @@ export type Database = {
           },
         ]
       }
+      community_mutes: {
+        Row: {
+          community_id: string
+          created_at: string
+          id: string
+          until: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          id?: string
+          until?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          id?: string
+          until?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_mutes_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           content: string
@@ -131,6 +192,38 @@ export type Database = {
           sender_id?: string
         }
         Relationships: []
+      }
+      message_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reason: string | null
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reason?: string | null
+          reporter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reason?: string | null
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -163,6 +256,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
