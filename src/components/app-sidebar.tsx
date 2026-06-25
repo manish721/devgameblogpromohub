@@ -90,7 +90,10 @@ export function AppSidebar() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <MessageCircle className="h-4 w-4 text-primary-foreground" />
           </div>
-          <div className="font-semibold">Hubchat</div>
+          <div className="font-semibold leading-tight">
+            Devgameblogpromo
+            <div className="text-[10px] font-normal text-muted-foreground">Community</div>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>

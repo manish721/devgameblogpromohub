@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
+import { SuperAdminProvider } from "@/hooks/use-super-admin";
 
 function NotFoundComponent() {
   return (
@@ -79,11 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Devgameblogpromo Community" },
+      { name: "description", content: "Devgameblogpromo Community — chat, channels, and private DMs." },
+      { name: "author", content: "Manish Kakarla" },
+      { property: "og:title", content: "Devgameblogpromo Community" },
+      { property: "og:description", content: "Chat, channels, and private DMs." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -121,8 +122,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <SuperAdminProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </SuperAdminProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

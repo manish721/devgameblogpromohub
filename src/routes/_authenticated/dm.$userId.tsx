@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Lock } from "lucide-react";
+import { Send, Lock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useSuperAdmin } from "@/hooks/use-super-admin";
 
 export const Route = createFileRoute("/_authenticated/dm/$userId")({
   component: DmConversation,
@@ -17,6 +18,7 @@ type Msg = { id: string; sender_id: string; recipient_id: string; content: strin
 function DmConversation() {
   const { userId } = Route.useParams();
   const { user } = useAuth();
+  const { isSuper, run } = useSuperAdmin();
   const [other, setOther] = useState<{ username: string; display_name: string | null } | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
@@ -78,6 +80,17 @@ function DmConversation() {
     if (error) toast.error(error.message);
   };
 
+  const deleteDm = async (id: string) => {
+    if (isSuper) {
+      const ok = await run({ type: "deleteDm", id });
+      if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
+      return;
+    }
+    const { error } = await supabase.from("direct_messages").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
+
   const name = other?.display_name || other?.username || "user";
 
   return (
@@ -100,7 +113,18 @@ function DmConversation() {
         {messages.map((m) => {
           const mine = m.sender_id === user?.id;
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`group flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
+              {mine && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                  onClick={() => deleteDm(m.id)}
+                  title="Delete"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
               <div
                 className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm ${
                   mine ? "bg-primary text-primary-foreground" : "bg-muted"
@@ -111,6 +135,17 @@ function DmConversation() {
                   {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
+              {!mine && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                  onClick={() => deleteDm(m.id)}
+                  title="Delete"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           );
         })}

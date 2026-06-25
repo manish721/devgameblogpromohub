@@ -19,6 +19,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Hash, Lock, Plus, Send, Settings, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useSuperAdmin } from "@/hooks/use-super-admin";
+import { Trash2, Flag, Ban, VolumeX, KeyRound } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/c/$slug")({
   head: () => ({ meta: [{ title: "Community — Hubchat" }] }),
@@ -39,6 +48,7 @@ type Message = {
 function CommunityPage() {
   const { slug } = Route.useParams();
   const { user } = useAuth();
+  const { isSuper, run } = useSuperAdmin();
   const navigate = useNavigate();
   const [community, setCommunity] = useState<Community | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -50,7 +60,7 @@ function CommunityPage() {
   const [notMember, setNotMember] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isAdmin = myRole === "admin" || myRole === "owner";
+  const isAdmin = myRole === "admin" || myRole === "owner" || isSuper;
   const activeChannel = useMemo(() => channels.find((c) => c.id === activeChannelId), [channels, activeChannelId]);
 
   // Load community + membership
@@ -181,6 +191,60 @@ function CommunityPage() {
     }
   };
 
+  const forceEnter = async () => {
+    if (!community || !user) return;
+    const ok = await run({ type: "forceJoin", communityId: community.id, userId: user.id });
+    if (ok) {
+      setNotMember(false);
+      setMyRole("admin");
+      await loadChannels(community.id);
+      await loadMembers(community.id);
+      toast.success("Entered with admin access");
+    }
+  };
+
+  const deleteMsg = async (id: string) => {
+    if (isSuper) {
+      const ok = await run({ type: "deleteMessage", id });
+      if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
+      return;
+    }
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
+
+  const reportMsg = async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("message_reports")
+      .insert({ message_id: id, reporter_id: user.id, reason: "user report" });
+    if (error) toast.error(error.message);
+    else toast.success("Reported");
+  };
+
+  const banUser = async (uid: string) => {
+    if (!community) return;
+    if (isSuper) {
+      await run({ type: "ban", communityId: community.id, userId: uid });
+    } else {
+      await supabase.from("community_bans").insert({ community_id: community.id, user_id: uid });
+      await supabase.from("community_members").delete().eq("community_id", community.id).eq("user_id", uid);
+    }
+    toast.success("User banned");
+    await loadMembers(community.id);
+  };
+
+  const muteUser = async (uid: string) => {
+    if (!community) return;
+    if (isSuper) {
+      await run({ type: "mute", communityId: community.id, userId: uid });
+    } else {
+      await supabase.from("community_mutes").insert({ community_id: community.id, user_id: uid });
+    }
+    toast.success("User muted");
+  };
+
   if (!community) return <div className="p-6 text-muted-foreground">Loading...</div>;
 
   if (notMember) {
@@ -188,9 +252,14 @@ function CommunityPage() {
       <div className="p-6 max-w-xl mx-auto">
         <h1 className="text-2xl font-bold">{community.name}</h1>
         <p className="text-muted-foreground mt-2">{community.description}</p>
-        <Button className="mt-4" onClick={joinNow}>
-          Join community
-        </Button>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={joinNow}>Join community</Button>
+          {isSuper && (
+            <Button variant="outline" onClick={forceEnter}>
+              <KeyRound className="h-4 w-4" /> Enter as admin
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -249,12 +318,13 @@ function CommunityPage() {
             const name = m.profile?.display_name || m.profile?.username || "user";
             const initials = name.slice(0, 2).toUpperCase();
             const mine = m.user_id === user?.id;
+            const canModerate = isAdmin || mine;
             return (
-              <div key={m.id} className="flex gap-3">
+              <div key={m.id} className="flex gap-3 group">
                 <Avatar className="h-8 w-8 mt-0.5">
                   <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                 </Avatar>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
                     <span className="text-sm font-medium">
                       {name} {mine && <span className="text-xs text-muted-foreground">(you)</span>}
@@ -265,6 +335,42 @@ function CommunityPage() {
                   </div>
                   <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {canModerate && (
+                      <DropdownMenuItem onClick={() => deleteMsg(m.id)} className="text-destructive">
+                        <Trash2 className="h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    )}
+                    {!mine && (
+                      <DropdownMenuItem onClick={() => reportMsg(m.id)}>
+                        <Flag className="h-4 w-4" /> Report
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && !mine && (
+                      <>
+                        <DropdownMenuItem onClick={() => muteUser(m.user_id)}>
+                          <VolumeX className="h-4 w-4" /> Mute user
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => banUser(m.user_id)}
+                          className="text-destructive"
+                        >
+                          <Ban className="h-4 w-4" /> Ban user
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             );
           })}
