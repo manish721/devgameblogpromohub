@@ -8,6 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Users, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useSuperAdmin } from "@/hooks/use-super-admin";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({ meta: [{ title: "Communities — Hubchat" }] }),
@@ -25,6 +38,7 @@ type Row = {
 
 function BrowsePage() {
   const { user } = useAuth();
+  const { isSuper, run } = useSuperAdmin();
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -80,6 +94,23 @@ function BrowsePage() {
     }
   };
 
+  const forceEnter = async (id: string) => {
+    if (!user) return;
+    const ok = await run({ type: "forceJoin", communityId: id, userId: user.id });
+    if (ok) {
+      toast.success("Entered with admin access");
+      void load();
+    }
+  };
+
+  const removeCommunity = async (id: string) => {
+    const ok = await run({ type: "deleteCommunity", id });
+    if (ok) {
+      toast.success("Community deleted");
+      void load();
+    }
+  };
+
   const filtered = rows.filter(
     (r) =>
       r.name.toLowerCase().includes(q.toLowerCase()) ||
@@ -120,17 +151,58 @@ function BrowsePage() {
                 <Badge variant="secondary" className="gap-1">
                   <Users className="h-3 w-3" /> {c.member_count}
                 </Badge>
-                {c.is_member ? (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/c/$slug" params={{ slug: c.slug }}>
-                      <Check className="h-4 w-4" /> Open
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button size="sm" onClick={() => join(c.id)}>
-                    Join
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {c.is_member ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/c/$slug" params={{ slug: c.slug }}>
+                        <Check className="h-4 w-4" /> Open
+                      </Link>
+                    </Button>
+                  ) : isSuper ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/c/$slug" params={{ slug: c.slug }}>
+                        <KeyRound className="h-4 w-4" /> Enter
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => join(c.id)}>
+                      Join
+                    </Button>
+                  )}
+                  {isSuper && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => forceEnter(c.id)}
+                        title="Force join as admin"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive" title="Delete community">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete "{c.name}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This permanently deletes the community, all its channels, members, and messages.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => removeCommunity(c.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
