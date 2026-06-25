@@ -84,14 +84,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Devgameblogpromo Community — chat, channels, and private DMs." },
       { name: "author", content: "Manish Kakarla" },
       { property: "og:title", content: "Devgameblogpromo Community" },
-      { property: "og:description", content: "Devgameblogpromo Community — chat, channels, and private DMs." },
+      { property: "og:description", content: "Chat, channels, and private DMs." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Devgameblogpromo Community" },
-      { name: "twitter:description", content: "Devgameblogpromo Community — chat, channels, and private DMs." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8a73e29-546c-4b9c-b652-f8ba236a101c/id-preview-9ed1f090--da125f01-c436-4523-9207-a46bff0b4aeb.lovable.app-1782354968544.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8a73e29-546c-4b9c-b652-f8ba236a101c/id-preview-9ed1f090--da125f01-c436-4523-9207-a46bff0b4aeb.lovable.app-1782354968544.png" },
     ],
     links: [
       {
