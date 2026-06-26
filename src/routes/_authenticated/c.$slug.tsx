@@ -180,10 +180,7 @@ function CommunityPage() {
     if (!community || !user) return;
     const { error } = await supabase
       .from("community_members")
-      .upsert(
-        { community_id: community.id, user_id: user.id, role: "member" },
-        { onConflict: "community_id,user_id", ignoreDuplicates: true },
-      );
+      .insert({ community_id: community.id, user_id: user.id, role: "member" });
     if (error) toast.error(error.message);
     else {
       toast.success("Joined");
