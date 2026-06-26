@@ -86,11 +86,16 @@ function BrowsePage() {
     if (!user) return;
     const { error } = await supabase
       .from("community_members")
-      .upsert(
-        { community_id: id, user_id: user.id, role: "member" },
-        { onConflict: "community_id,user_id", ignoreDuplicates: true },
-      );
-    if (error) toast.error(error.message);
+      .insert({ community_id: id, user_id: user.id, role: "member" });
+    if (error && error.code !== "23505" && !error.message.toLowerCase().includes("duplicate key")) {
+      toast.error(error.message);
+      return;
+    }
+    if (error) {
+      toast.success("Already joined");
+      void load();
+      return;
+    }
     else {
       toast.success("Joined");
       void load();
