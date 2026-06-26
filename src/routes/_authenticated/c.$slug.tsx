@@ -180,16 +180,13 @@ function CommunityPage() {
     if (!community || !user) return;
     const { error } = await supabase
       .from("community_members")
-      .insert({ community_id: community.id, user_id: user.id, role: "member" });
-    if (error && error.code !== "23505" && !error.message.toLowerCase().includes("duplicate key")) {
-      toast.error(error.message);
-      return;
-    }
-    if (error) toast.success("Already joined");
+      .upsert(
+        { community_id: community.id, user_id: user.id, role: "member" },
+        { onConflict: "community_id,user_id", ignoreDuplicates: true },
+      );
+    if (error) toast.error(error.message);
     else {
       toast.success("Joined");
-    }
-    {
       setNotMember(false);
       setMyRole("member");
       await loadChannels(community.id);
