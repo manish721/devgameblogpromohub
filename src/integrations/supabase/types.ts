@@ -356,6 +356,10 @@ export type Database = {
         Args: { _community: string; _user: string }
         Returns: boolean
       }
+      is_community_owner: {
+        Args: { _community: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
