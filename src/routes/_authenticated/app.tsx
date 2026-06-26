@@ -86,7 +86,10 @@ function BrowsePage() {
     if (!user) return;
     const { error } = await supabase
       .from("community_members")
-      .insert({ community_id: id, user_id: user.id, role: "member" });
+      .upsert(
+        { community_id: id, user_id: user.id, role: "member" },
+        { onConflict: "community_id,user_id", ignoreDuplicates: true },
+      );
     if (error) toast.error(error.message);
     else {
       toast.success("Joined");
