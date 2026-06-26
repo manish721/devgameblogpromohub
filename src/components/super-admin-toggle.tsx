@@ -36,9 +36,9 @@ export function SuperAdminToggle() {
           <DialogDescription>Enter the admin password to unlock full control.</DialogDescription>
         </DialogHeader>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (enable(pwd)) {
+            if (await enable(pwd)) {
               setOpen(false);
               setPwd("");
             }
