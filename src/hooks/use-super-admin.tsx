@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 type Ctx = {
   isSuper: boolean;
-  enable: (password: string) => boolean;
+  enable: (password: string) => Promise<boolean>;
   disable: () => void;
   run: (action: Parameters<typeof superAdmin>[0]["data"]["action"]) => Promise<boolean>;
 };
@@ -14,7 +14,7 @@ const PWD_KEY = "dgbpc:super:pwd";
 
 const C = createContext<Ctx>({
   isSuper: false,
-  enable: () => false,
+  enable: async () => false,
   disable: () => {},
   run: async () => false,
 });
