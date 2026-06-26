@@ -28,10 +28,17 @@ export function SuperAdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const enable = useCallback((password: string) => {
-    if (password !== "483921") {
-      toast.error("Wrong password");
-      return false;
+  const enable = useCallback(async (password: string) => {
+    // Verify against the server (requires Supabase auth + correct server-stored password).
+    try {
+      await superAdmin({ data: { password, action: { type: "noop" } as never } });
+    } catch (e) {
+      const msg = (e as Error).message ?? "";
+      // The "noop" action will throw "Unknown action" only after password + auth both pass.
+      if (!msg.includes("Unknown action")) {
+        toast.error(msg.includes("Unauthorized") ? "Please sign in first" : "Wrong password");
+        return false;
+      }
     }
     sessionStorage.setItem(KEY, "1");
     sessionStorage.setItem(PWD_KEY, password);
