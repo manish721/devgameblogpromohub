@@ -56,7 +56,14 @@ export const superAdmin = createServerFn({ method: "POST" })
       case "ban": {
         await supabaseAdmin
           .from("community_bans")
-          .upsert({ community_id: act.communityId, user_id: act.userId }, { onConflict: "community_id,user_id" });
+          .upsert(
+            {
+              community_id: act.communityId,
+              user_id: act.userId,
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            { onConflict: "community_id,user_id" },
+          );
         await supabaseAdmin
           .from("community_members")
           .delete()
