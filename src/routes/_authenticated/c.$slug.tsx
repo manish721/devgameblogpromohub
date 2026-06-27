@@ -204,14 +204,12 @@ function CommunityPage() {
   };
 
   const deleteMsg = async (id: string) => {
-    if (isSuper) {
-      const ok = await run({ type: "deleteMessage", id });
-      if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
+    if (!isSuper) {
+      toast.error("Only the admin can delete messages");
       return;
     }
-    const { error } = await supabase.from("messages").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    setMessages((prev) => prev.filter((m) => m.id !== id));
+    const ok = await run({ type: "deleteMessage", id });
+    if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
   };
 
   const reportMsg = async (id: string) => {
@@ -345,7 +343,7 @@ function CommunityPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {canModerate && (
+                    {isSuper && (
                       <DropdownMenuItem onClick={() => deleteMsg(m.id)} className="text-destructive">
                         <Trash2 className="h-4 w-4" /> Delete
                       </DropdownMenuItem>
