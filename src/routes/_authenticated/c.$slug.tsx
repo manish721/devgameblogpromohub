@@ -225,13 +225,12 @@ function CommunityPage() {
 
   const banUser = async (uid: string) => {
     if (!community) return;
-    if (isSuper) {
-      await run({ type: "ban", communityId: community.id, userId: uid });
-    } else {
-      await supabase.from("community_bans").insert({ community_id: community.id, user_id: uid });
-      await supabase.from("community_members").delete().eq("community_id", community.id).eq("user_id", uid);
+    if (!isSuper) {
+      toast.error("Only the admin can ban users");
+      return;
     }
-    toast.success("User banned");
+    await run({ type: "ban", communityId: community.id, userId: uid });
+    toast.success("User banned for 7 days");
     await loadMembers(community.id);
   };
 
@@ -356,7 +355,7 @@ function CommunityPage() {
                         <Flag className="h-4 w-4" /> Report
                       </DropdownMenuItem>
                     )}
-                    {isAdmin && !mine && (
+                    {isSuper && !mine && (
                       <>
                         <DropdownMenuItem onClick={() => muteUser(m.user_id)}>
                           <VolumeX className="h-4 w-4" /> Mute user
