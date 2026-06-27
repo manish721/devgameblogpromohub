@@ -80,18 +80,21 @@ export type Database = {
         Row: {
           community_id: string
           created_at: string
+          expires_at: string
           id: string
           user_id: string
         }
         Insert: {
           community_id: string
           created_at?: string
+          expires_at?: string
           id?: string
           user_id: string
         }
         Update: {
           community_id?: string
           created_at?: string
+          expires_at?: string
           id?: string
           user_id?: string
         }
