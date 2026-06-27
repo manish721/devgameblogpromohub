@@ -112,7 +112,7 @@ function DmConversation() {
           const mine = m.sender_id === user?.id;
           return (
             <div key={m.id} className={`group flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
-              {mine && (
+              {mine && isSuper && (
                 <Button
                   size="icon"
                   variant="ghost"
@@ -133,7 +133,7 @@ function DmConversation() {
                   {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
-              {!mine && (
+              {!mine && isSuper && (
                 <Button
                   size="icon"
                   variant="ghost"
