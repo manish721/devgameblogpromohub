@@ -81,14 +81,12 @@ function DmConversation() {
   };
 
   const deleteDm = async (id: string) => {
-    if (isSuper) {
-      const ok = await run({ type: "deleteDm", id });
-      if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
+    if (!isSuper) {
+      toast.error("Only the admin can delete messages");
       return;
     }
-    const { error } = await supabase.from("direct_messages").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    setMessages((prev) => prev.filter((m) => m.id !== id));
+    const ok = await run({ type: "deleteDm", id });
+    if (ok) setMessages((prev) => prev.filter((m) => m.id !== id));
   };
 
   const name = other?.display_name || other?.username || "user";
