@@ -178,9 +178,7 @@ function CommunityPage() {
 
   const joinNow = async () => {
     if (!community || !user) return;
-    const { error } = await supabase
-      .from("community_members")
-      .insert({ community_id: community.id, user_id: user.id, role: "member" });
+    const { error } = await supabase.rpc("join_community", { _community_id: community.id });
     if (error) toast.error(error.message);
     else {
       toast.success("Joined");
