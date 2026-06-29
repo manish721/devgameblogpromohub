@@ -363,6 +363,22 @@ export type Database = {
         Args: { _community: string; _user: string }
         Returns: boolean
       }
+      join_community: {
+        Args: { _community_id: string }
+        Returns: {
+          community_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "community_members"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "user"
