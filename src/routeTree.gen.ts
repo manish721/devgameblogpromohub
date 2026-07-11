@@ -16,6 +16,7 @@ import { Route as AuthenticatedDmRouteImport } from './routes/_authenticated/dm'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedDmUserIdRouteImport } from './routes/_authenticated/dm.$userId'
 import { Route as AuthenticatedCSlugRouteImport } from './routes/_authenticated/c.$slug'
+import { Route as AuthenticatedAdminBansRouteImport } from './routes/_authenticated/admin.bans'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -51,12 +52,18 @@ const AuthenticatedCSlugRoute = AuthenticatedCSlugRouteImport.update({
   path: '/c/$slug',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminBansRoute = AuthenticatedAdminBansRouteImport.update({
+  id: '/admin/bans',
+  path: '/admin/bans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/dm': typeof AuthenticatedDmRouteWithChildren
+  '/admin/bans': typeof AuthenticatedAdminBansRoute
   '/c/$slug': typeof AuthenticatedCSlugRoute
   '/dm/$userId': typeof AuthenticatedDmUserIdRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/dm': typeof AuthenticatedDmRouteWithChildren
+  '/admin/bans': typeof AuthenticatedAdminBansRoute
   '/c/$slug': typeof AuthenticatedCSlugRoute
   '/dm/$userId': typeof AuthenticatedDmUserIdRoute
 }
@@ -75,14 +83,29 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/dm': typeof AuthenticatedDmRouteWithChildren
+  '/_authenticated/admin/bans': typeof AuthenticatedAdminBansRoute
   '/_authenticated/c/$slug': typeof AuthenticatedCSlugRoute
   '/_authenticated/dm/$userId': typeof AuthenticatedDmUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app' | '/dm' | '/c/$slug' | '/dm/$userId'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/dm'
+    | '/admin/bans'
+    | '/c/$slug'
+    | '/dm/$userId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app' | '/dm' | '/c/$slug' | '/dm/$userId'
+  to:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/dm'
+    | '/admin/bans'
+    | '/c/$slug'
+    | '/dm/$userId'
   id:
     | '__root__'
     | '/'
@@ -90,6 +113,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app'
     | '/_authenticated/dm'
+    | '/_authenticated/admin/bans'
     | '/_authenticated/c/$slug'
     | '/_authenticated/dm/$userId'
   fileRoutesById: FileRoutesById
@@ -151,6 +175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCSlugRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/bans': {
+      id: '/_authenticated/admin/bans'
+      path: '/admin/bans'
+      fullPath: '/admin/bans'
+      preLoaderRoute: typeof AuthenticatedAdminBansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -169,12 +200,14 @@ const AuthenticatedDmRouteWithChildren = AuthenticatedDmRoute._addFileChildren(
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedDmRoute: typeof AuthenticatedDmRouteWithChildren
+  AuthenticatedAdminBansRoute: typeof AuthenticatedAdminBansRoute
   AuthenticatedCSlugRoute: typeof AuthenticatedCSlugRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedDmRoute: AuthenticatedDmRouteWithChildren,
+  AuthenticatedAdminBansRoute: AuthenticatedAdminBansRoute,
   AuthenticatedCSlugRoute: AuthenticatedCSlugRoute,
 }
 

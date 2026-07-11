@@ -29,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Hash, LogOut, MessageCircle, Plus, Search, Users } from "lucide-react";
+import { Hash, LogOut, MessageCircle, Plus, Search, ShieldAlert, Users } from "lucide-react";
+import { useSuperAdmin } from "@/hooks/use-super-admin";
 import { toast } from "sonner";
 
 type Community = { id: string; name: string; slug: string };
@@ -37,6 +38,7 @@ type Community = { id: string; name: string; slug: string };
 export function AppSidebar() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isSuper } = useSuperAdmin();
   const [communities, setCommunities] = useState<Community[]>([]);
   const [profile, setProfile] = useState<{ username: string; display_name: string | null } | null>(null);
 
@@ -116,6 +118,16 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isSuper && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/admin/bans">
+                      <ShieldAlert className="h-4 w-4" />
+                      <span>Ban management</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
