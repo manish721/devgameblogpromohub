@@ -19,7 +19,7 @@ type Action =
 export const superAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { password: string; action: Action }) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const expected = process.env.SUPER_ADMIN_PASSWORD;
     if (!expected) {
       throw new Error("Super admin not configured");
