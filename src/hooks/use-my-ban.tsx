@@ -23,13 +23,16 @@ export function useMyBan() {
       setLoading(false);
       return;
     }
-    const { data } = await supabase.rpc("get_my_active_ban");
-    const row = (data as MyBan | null) ?? null;
-    if (row && row.id && new Date(row.ends_at) > new Date()) {
-      setBan(row);
-    } else {
-      setBan(null);
-    }
+    const { data } = await (supabase as any)
+      .from("user_bans")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .gt("ends_at", new Date().toISOString())
+      .order("ends_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setBan((data as MyBan | null) ?? null);
     setLoading(false);
   }, [user]);
 
