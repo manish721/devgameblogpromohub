@@ -7,6 +7,7 @@ type Ctx = {
   enable: (password: string) => Promise<boolean>;
   disable: () => void;
   run: (action: Parameters<typeof superAdmin>[0]["data"]["action"]) => Promise<boolean>;
+  call: <T = unknown>(action: Parameters<typeof superAdmin>[0]["data"]["action"]) => Promise<T | null>;
 };
 
 const KEY = "dgbpc:super";
@@ -17,6 +18,7 @@ const C = createContext<Ctx>({
   enable: async () => false,
   disable: () => {},
   run: async () => false,
+  call: async () => null,
 });
 
 export function SuperAdminProvider({ children }: { children: ReactNode }) {
@@ -64,7 +66,18 @@ export function SuperAdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return <C.Provider value={{ isSuper, enable, disable, run }}>{children}</C.Provider>;
+  const call = useCallback(async <T,>(action: Parameters<typeof superAdmin>[0]["data"]["action"]): Promise<T | null> => {
+    const password = sessionStorage.getItem(PWD_KEY) ?? "";
+    try {
+      const res = (await superAdmin({ data: { password, action } })) as T;
+      return res;
+    } catch (e) {
+      toast.error((e as Error).message ?? "Action failed");
+      return null;
+    }
+  }, []);
+
+  return <C.Provider value={{ isSuper, enable, disable, run, call }}>{children}</C.Provider>;
 }
 
 export const useSuperAdmin = () => useContext(C);
