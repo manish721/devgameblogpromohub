@@ -317,6 +317,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bans: {
+        Row: {
+          banned_by: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          reason: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banned_by?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          reason?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banned_by?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          reason?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -344,6 +380,26 @@ export type Database = {
         Args: { _channel: string; _user: string }
         Returns: boolean
       }
+      get_my_active_ban: {
+        Args: never
+        Returns: {
+          banned_by: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          reason: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_bans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -363,6 +419,7 @@ export type Database = {
         Args: { _community: string; _user: string }
         Returns: boolean
       }
+      is_user_banned: { Args: { _user: string }; Returns: boolean }
       join_community: {
         Args: { _community_id: string }
         Returns: {
