@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { ShieldAlert, ShieldCheck, Search, UserX, RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { superAdmin } from "@/lib/superadmin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/bans")({
   component: AdminBansPage,
@@ -103,6 +104,7 @@ function BansConsole({ call }: { call: ReturnType<typeof useSuperAdmin>["call"] 
   const [tab, setTab] = useState<"active" | "expired" | "removed" | "all">("active");
   const [search, setSearch] = useState("");
   const [banOpen, setBanOpen] = useState(false);
+  const [unbanTarget, setUnbanTarget] = useState<BanRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,14 +135,6 @@ function BansConsole({ call }: { call: ReturnType<typeof useSuperAdmin>["call"] 
     for (const b of bans) c[b.effective_status]++;
     return c;
   }, [bans]);
-
-  async function unban(banId: string) {
-    const ok = await call({ type: "unbanUser", banId });
-    if (ok) {
-      toast.success("Ban removed");
-      void load();
-    }
-  }
 
   return (
     <div className="p-4 sm:p-6 space-y-4 max-w-6xl">
@@ -224,7 +218,7 @@ function BansConsole({ call }: { call: ReturnType<typeof useSuperAdmin>["call"] 
                 </div>
                 <div>
                   {b.effective_status === "active" && (
-                    <Button size="sm" variant="outline" onClick={() => unban(b.id)}>
+                    <Button size="sm" variant="outline" onClick={() => setUnbanTarget(b)}>
                       <RotateCcw className="h-3 w-3 mr-1" /> Unban
                     </Button>
                   )}
@@ -244,7 +238,92 @@ function BansConsole({ call }: { call: ReturnType<typeof useSuperAdmin>["call"] 
           setBanOpen(false);
         }}
       />
+      <UnbanDialog
+        target={unbanTarget}
+        onOpenChange={(v) => !v && setUnbanTarget(null)}
+        onDone={() => {
+          setUnbanTarget(null);
+          void load();
+        }}
+      />
     </div>
+  );
+}
+
+function UnbanDialog({
+  target,
+  onOpenChange,
+  onDone,
+}: {
+  target: BanRow | null;
+  onOpenChange: (v: boolean) => void;
+  onDone: () => void;
+}) {
+  const [pwd, setPwd] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!target) {
+      setPwd("");
+      setReason("");
+    }
+  }, [target]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!target) return;
+    setSaving(true);
+    try {
+      await superAdmin({
+        data: {
+          password: pwd,
+          action: { type: "unbanUser", banId: target.id, reason: reason.trim() || undefined },
+        },
+      });
+      toast.success(`Ban removed for @${target.user?.username ?? "user"}`);
+      onDone();
+    } catch (e) {
+      toast.error((e as Error).message ?? "Failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={!!target} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Remove ban</DialogTitle>
+          <DialogDescription>
+            Re-enter the administrator password to confirm this action. It will be logged for audit.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Administrator password</Label>
+            <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoFocus required />
+          </div>
+          <div className="space-y-2">
+            <Label>Reason (optional)</Label>
+            <Textarea
+              placeholder="Why is this ban being lifted?"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving || !pwd}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+              Confirm unban
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
