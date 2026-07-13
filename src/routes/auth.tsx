@@ -31,9 +31,39 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      toast.error(error.message);
+      return;
+    }
+    // Verify ban status server-side before granting entry
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+    let ban: any = null;
+    if (uid) {
+      const { data } = await (supabase as any)
+        .from("user_bans")
+        .select("*")
+        .eq("user_id", uid)
+        .eq("status", "active")
+        .gt("ends_at", new Date().toISOString())
+        .order("ends_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      ban = data;
+    }
+    if (ban) {
+      try {
+        sessionStorage.setItem("hub:bannedInfo", JSON.stringify(ban));
+      } catch {}
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Your account is banned");
+      navigate({ to: "/banned" });
+      return;
+    }
     setLoading(false);
-    if (error) toast.error(error.message);
-    else toast.success("Welcome back");
+    toast.success("Welcome back");
   };
 
   const signUp = async (e: React.FormEvent) => {

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "@tanstack/react-router";
 
 export type MyBan = {
   id: string;
@@ -14,6 +15,7 @@ export type MyBan = {
 
 export function useMyBan() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [ban, setBan] = useState<MyBan | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +37,21 @@ export function useMyBan() {
     setBan((data as MyBan | null) ?? null);
     setLoading(false);
   }, [user]);
+
+  // If a ban becomes active for the signed-in user, immediately terminate the session.
+  useEffect(() => {
+    if (!ban || typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem("hub:bannedInfo", JSON.stringify(ban));
+    } catch {}
+    void (async () => {
+      navigate({ to: "/banned" });
+      // Slight delay so the public route mounts before session tears down
+      setTimeout(() => {
+        void supabase.auth.signOut();
+      }, 50);
+    })();
+  }, [ban, navigate]);
 
   useEffect(() => {
     void refresh();

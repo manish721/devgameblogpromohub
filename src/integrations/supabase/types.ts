@@ -326,6 +326,9 @@ export type Database = {
           reason: string
           started_at: string
           status: string
+          unban_reason: string | null
+          unbanned_at: string | null
+          unbanned_by: string | null
           updated_at: string
           user_id: string
         }
@@ -337,6 +340,9 @@ export type Database = {
           reason?: string
           started_at?: string
           status?: string
+          unban_reason?: string | null
+          unbanned_at?: string | null
+          unbanned_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -348,6 +354,9 @@ export type Database = {
           reason?: string
           started_at?: string
           status?: string
+          unban_reason?: string | null
+          unbanned_at?: string | null
+          unbanned_by?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -390,6 +399,9 @@ export type Database = {
           reason: string
           started_at: string
           status: string
+          unban_reason: string | null
+          unbanned_at: string | null
+          unbanned_by: string | null
           updated_at: string
           user_id: string
         }

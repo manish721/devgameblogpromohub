@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as BannedRouteImport } from './routes/banned'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as AuthenticatedDmUserIdRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCSlugRouteImport } from './routes/_authenticated/c.$slug'
 import { Route as AuthenticatedAdminBansRouteImport } from './routes/_authenticated/admin.bans'
 
+const BannedRoute = BannedRouteImport.update({
+  id: '/banned',
+  path: '/banned',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -61,6 +67,7 @@ const AuthenticatedAdminBansRoute = AuthenticatedAdminBansRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/banned': typeof BannedRoute
   '/app': typeof AuthenticatedAppRoute
   '/dm': typeof AuthenticatedDmRouteWithChildren
   '/admin/bans': typeof AuthenticatedAdminBansRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/banned': typeof BannedRoute
   '/app': typeof AuthenticatedAppRoute
   '/dm': typeof AuthenticatedDmRouteWithChildren
   '/admin/bans': typeof AuthenticatedAdminBansRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/banned': typeof BannedRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/dm': typeof AuthenticatedDmRouteWithChildren
   '/_authenticated/admin/bans': typeof AuthenticatedAdminBansRoute
@@ -92,6 +101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/banned'
     | '/app'
     | '/dm'
     | '/admin/bans'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/banned'
     | '/app'
     | '/dm'
     | '/admin/bans'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/banned'
     | '/_authenticated/app'
     | '/_authenticated/dm'
     | '/_authenticated/admin/bans'
@@ -122,10 +134,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BannedRoute: typeof BannedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/banned': {
+      id: '/banned'
+      path: '/banned'
+      fullPath: '/banned'
+      preLoaderRoute: typeof BannedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -218,6 +238,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BannedRoute: BannedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

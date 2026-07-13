@@ -12,7 +12,7 @@ type Action =
   | { type: "mute"; communityId: string; userId: string }
   | { type: "unmute"; communityId: string; userId: string }
   | { type: "banUser"; userId: string; reason: string }
-  | { type: "unbanUser"; banId: string }
+  | { type: "unbanUser"; banId: string; reason?: string }
   | { type: "listBans" }
   | { type: "findUser"; query: string };
 
@@ -118,9 +118,16 @@ export const superAdmin = createServerFn({ method: "POST" })
         return { ok: true };
       }
       case "unbanUser": {
+        const nowIso = new Date().toISOString();
         const { error } = await supabaseAdmin
           .from("user_bans")
-          .update({ status: "removed", ends_at: new Date().toISOString() })
+          .update({
+            status: "removed",
+            ends_at: nowIso,
+            unbanned_by: context.userId,
+            unbanned_at: nowIso,
+            unban_reason: act.reason ?? null,
+          })
           .eq("id", act.banId);
         if (error) throw error;
         return { ok: true };
