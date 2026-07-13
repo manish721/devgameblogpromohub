@@ -45,8 +45,11 @@ export function useMyBan() {
       sessionStorage.setItem("hub:bannedInfo", JSON.stringify(ban));
     } catch {}
     void (async () => {
-      await supabase.auth.signOut();
       navigate({ to: "/banned" });
+      // Slight delay so the public route mounts before session tears down
+      setTimeout(() => {
+        void supabase.auth.signOut();
+      }, 50);
     })();
   }, [ban, navigate]);
 
