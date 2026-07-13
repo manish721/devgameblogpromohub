@@ -37,7 +37,21 @@ function AuthPage() {
       return;
     }
     // Verify ban status server-side before granting entry
-    const { data: ban } = await (supabase as any).rpc("get_my_active_ban");
+    const { data: userRes } = await supabase.auth.getUser();
+    const uid = userRes.user?.id;
+    let ban: any = null;
+    if (uid) {
+      const { data } = await (supabase as any)
+        .from("user_bans")
+        .select("*")
+        .eq("user_id", uid)
+        .eq("status", "active")
+        .gt("ends_at", new Date().toISOString())
+        .order("ends_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      ban = data;
+    }
     if (ban) {
       try {
         sessionStorage.setItem("hub:bannedInfo", JSON.stringify(ban));
