@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { MessageCircle } from "lucide-react";
+import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Hubchat" }] }),
@@ -22,10 +23,25 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (session) navigate({ to: "/app" });
   }, [session, navigate]);
+
+  const signInWithGoogle = async () => {
+    setGoogleLoading(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      setGoogleLoading(false);
+      toast.error(result.error.message || "Google sign-in failed");
+      return;
+    }
+    if (result.redirected) return;
+    // Session set — auth listener will redirect
+  };
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
