@@ -11,7 +11,22 @@ type Ctx = {
 };
 
 const KEY = "dgbpc:super";
-const PWD_KEY = "dgbpc:super:pwd";
+const TOKEN_KEY = "dgbpc:super:token";
+const EXP_KEY = "dgbpc:super:exp";
+
+function readToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  const exp = Number(sessionStorage.getItem(EXP_KEY) ?? 0);
+  if (!t || !exp || exp < Date.now()) return null;
+  return t;
+}
+function clearToken() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(EXP_KEY);
+}
 
 const C = createContext<Ctx>({
   isSuper: false,
@@ -25,57 +40,62 @@ export function SuperAdminProvider({ children }: { children: ReactNode }) {
   const [isSuper, setIsSuper] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(KEY) === "1") {
-      setIsSuper(true);
-    }
+    if (readToken()) setIsSuper(true);
+    else clearToken();
   }, []);
 
   const enable = useCallback(async (password: string) => {
-    // Verify against the server (requires Supabase auth + correct server-stored password).
     try {
-      await superAdmin({ data: { password, action: { type: "noop" } as never } });
-    } catch (e) {
-      const msg = (e as Error).message ?? "";
-      // The "noop" action will throw "Unknown action" only after password + auth both pass.
-      if (!msg.includes("Unknown action")) {
-        toast.error(msg.includes("Unauthorized") ? "Please sign in first" : "Wrong password");
-        return false;
-      }
-    }
-    sessionStorage.setItem(KEY, "1");
-    sessionStorage.setItem(PWD_KEY, password);
-    setIsSuper(true);
-    toast.success("Super admin mode ON");
-    return true;
-  }, []);
-
-  const disable = useCallback(() => {
-    sessionStorage.removeItem(KEY);
-    sessionStorage.removeItem(PWD_KEY);
-    setIsSuper(false);
-  }, []);
-
-  const run = useCallback<Ctx["run"]>(async (action) => {
-    const password = sessionStorage.getItem(PWD_KEY) ?? "";
-    try {
-      await superAdmin({ data: { password, action } });
+      const res = (await superAdmin({
+        data: { password, action: { type: "signIn" } },
+      })) as { ok: boolean; token: string; exp: number };
+      sessionStorage.setItem(KEY, "1");
+      sessionStorage.setItem(TOKEN_KEY, res.token);
+      sessionStorage.setItem(EXP_KEY, String(res.exp));
+      setIsSuper(true);
+      toast.success("Super admin mode ON");
       return true;
     } catch (e) {
-      toast.error((e as Error).message ?? "Action failed");
+      const msg = (e as Error).message ?? "";
+      toast.error(msg.includes("Unauthorized") ? "Please sign in first" : "Wrong password");
       return false;
     }
   }, []);
 
-  const call = useCallback(async <T,>(action: Parameters<typeof superAdmin>[0]["data"]["action"]): Promise<T | null> => {
-    const password = sessionStorage.getItem(PWD_KEY) ?? "";
+  const disable = useCallback(() => {
+    clearToken();
+    setIsSuper(false);
+  }, []);
+
+  const handleErr = useCallback((e: unknown) => {
+    const msg = (e as Error).message ?? "Action failed";
+    if (msg.includes("Admin session")) {
+      clearToken();
+      setIsSuper(false);
+    }
+    toast.error(msg);
+  }, []);
+
+  const run = useCallback<Ctx["run"]>(async (action) => {
+    const token = readToken() ?? "";
     try {
-      const res = (await superAdmin({ data: { password, action } })) as T;
-      return res;
+      await superAdmin({ data: { token, action } });
+      return true;
     } catch (e) {
-      toast.error((e as Error).message ?? "Action failed");
+      handleErr(e);
+      return false;
+    }
+  }, [handleErr]);
+
+  const call = useCallback(async <T,>(action: Parameters<typeof superAdmin>[0]["data"]["action"]): Promise<T | null> => {
+    const token = readToken() ?? "";
+    try {
+      return (await superAdmin({ data: { token, action } })) as T;
+    } catch (e) {
+      handleErr(e);
       return null;
     }
-  }, []);
+  }, [handleErr]);
 
   return <C.Provider value={{ isSuper, enable, disable, run, call }}>{children}</C.Provider>;
 }
