@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { ShieldAlert, ShieldCheck, Search, UserX, RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { superAdmin } from "@/lib/superadmin.functions";
-
 export const Route = createFileRoute("/_authenticated/admin/bans")({
   component: AdminBansPage,
 });
@@ -259,13 +257,12 @@ function UnbanDialog({
   onOpenChange: (v: boolean) => void;
   onDone: () => void;
 }) {
-  const [pwd, setPwd] = useState("");
+  const { call } = useSuperAdmin();
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!target) {
-      setPwd("");
       setReason("");
     }
   }, [target]);
@@ -274,19 +271,15 @@ function UnbanDialog({
     e.preventDefault();
     if (!target) return;
     setSaving(true);
-    try {
-      await superAdmin({
-        data: {
-          password: pwd,
-          action: { type: "unbanUser", banId: target.id, reason: reason.trim() || undefined },
-        },
-      });
+    const ok = await call({
+      type: "unbanUser",
+      banId: target.id,
+      reason: reason.trim() || undefined,
+    });
+    setSaving(false);
+    if (ok) {
       toast.success(`Ban removed for @${target.user?.username ?? "user"}`);
       onDone();
-    } catch (e) {
-      toast.error((e as Error).message ?? "Failed");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -296,14 +289,10 @@ function UnbanDialog({
         <DialogHeader>
           <DialogTitle>Remove ban</DialogTitle>
           <DialogDescription>
-            Re-enter the administrator password to confirm this action. It will be logged for audit.
+            Confirm to remove this ban. This action is logged for audit.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>Administrator password</Label>
-            <Input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} autoFocus required />
-          </div>
           <div className="space-y-2">
             <Label>Reason (optional)</Label>
             <Textarea
@@ -316,7 +305,7 @@ function UnbanDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || !pwd}>
+            <Button type="submit" disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
               Confirm unban
             </Button>
